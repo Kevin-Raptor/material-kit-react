@@ -156,6 +156,8 @@ export const AuthProvider = (props) => {
   };
 
   const signOut = () => {
+    window.sessionStorage.setItem('authenticated', 'false');
+
     dispatch({
       type: HANDLERS.SIGN_OUT
     });

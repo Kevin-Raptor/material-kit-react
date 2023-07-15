@@ -73,6 +73,15 @@ export const items = [
     )
   },
   {
+    title: 'Trial',
+    path: '/trial',
+    icon: (
+      <SvgIcon fontSize="small">
+        <UserPlusIcon />
+      </SvgIcon>
+    )
+  },
+  {
     title: 'Error',
     path: '/404',
     icon: (
