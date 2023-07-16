@@ -54,7 +54,7 @@ export const SideNav = (props) => {
           >
             <Logo />
           </Box>
-          <Box
+          {/* <Box
             sx={{
               alignItems: 'center',
               backgroundColor: 'rgba(255, 255, 255, 0.04)',
@@ -86,7 +86,7 @@ export const SideNav = (props) => {
             >
               <ChevronUpDownIcon />
             </SvgIcon>
-          </Box>
+          </Box> */}
         </Box>
         <Divider sx={{ borderColor: 'neutral.700' }} />
         <Box
@@ -124,7 +124,7 @@ export const SideNav = (props) => {
           </Stack>
         </Box>
         <Divider sx={{ borderColor: 'neutral.700' }} />
-        <Box
+        {/* <Box
           sx={{
             px: 2,
             py: 3
@@ -173,7 +173,7 @@ export const SideNav = (props) => {
           >
             Pro Live Preview
           </Button>
-        </Box>
+        </Box> */}
       </Box>
     </Scrollbar>
   );
