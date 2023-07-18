@@ -7,7 +7,7 @@ import UserPlusIcon from '@heroicons/react/24/solid/UserPlusIcon';
 import UsersIcon from '@heroicons/react/24/solid/UsersIcon';
 import XCircleIcon from '@heroicons/react/24/solid/XCircleIcon';
 import { SvgIcon } from '@mui/material';
-
+import MapsHomeWorkIcon from '@mui/icons-material/MapsHomeWork';
 export const items = [
   {
     title: 'Overview',
@@ -81,6 +81,16 @@ export const items = [
       </SvgIcon>
     )
   },
+  {
+    title: 'Property',
+    path: '/property',
+    icon: (
+      <SvgIcon fontSize="small">
+        <MapsHomeWorkIcon />
+      </SvgIcon>
+    )
+  },
+  
   // {
   //   title: 'Error',
   //   path: '/404',
