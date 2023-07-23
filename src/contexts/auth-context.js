@@ -4,13 +4,15 @@ import PropTypes from 'prop-types';
 const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
   SIGN_IN: 'SIGN_IN',
-  SIGN_OUT: 'SIGN_OUT'
+  SIGN_OUT: 'SIGN_OUT',
+  CHANGE_THEME: 'CHANGE_THEME'
 };
 
 const initialState = {
   isAuthenticated: false,
   isLoading: true,
-  user: null
+  user: null,
+  darkTheme: false
 };
 
 const handlers = {
@@ -47,6 +49,12 @@ const handlers = {
       ...state,
       isAuthenticated: false,
       user: null
+    };
+  },
+  [HANDLERS.CHANGE_THEME]: (state) => {
+    return {
+      ...state,
+      darkTheme: !darkTheme
     };
   }
 };
