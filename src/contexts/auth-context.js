@@ -1,16 +1,20 @@
 import { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import PropTypes from 'prop-types';
+import { login } from 'src/utils/api-calls/service';
+import { constant } from 'src/config/constant-config';
 
 const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
   SIGN_IN: 'SIGN_IN',
-  SIGN_OUT: 'SIGN_OUT'
+  SIGN_OUT: 'SIGN_OUT',
+  SET_AUTH_TOKEN: 'SET_AUTH_TOKEN'
 };
 
 const initialState = {
   isAuthenticated: false,
   isLoading: true,
-  user: null
+  user: null,
+  userAuthToken: null
 };
 
 const handlers = {
@@ -35,7 +39,6 @@ const handlers = {
   },
   [HANDLERS.SIGN_IN]: (state, action) => {
     const user = action.payload;
-
     return {
       ...state,
       isAuthenticated: true,
@@ -48,6 +51,14 @@ const handlers = {
       isAuthenticated: false,
       user: null
     };
+  },
+  [HANDLERS.SET_AUTH_TOKEN]: (state, action) => {
+      const {token} = action.payload
+      console.log('set auth token action', token)
+      return{
+        ...state,
+        userAuthToken: token
+      }
   }
 };
 
@@ -65,6 +76,7 @@ export const AuthProvider = (props) => {
   const initialized = useRef(false);
 
   const initialize = async () => {
+    console.log(`initialze called`)
     // Prevent from calling twice in development mode with React.StrictMode enabled
     if (initialized.current) {
       return;
@@ -85,7 +97,7 @@ export const AuthProvider = (props) => {
         id: '5e86809283e28b96d2d38537',
         avatar: '/assets/avatars/avatar-anika-visser.png',
         name: 'Anika Visser',
-        email: 'anika.visser@devias.io'
+        email: 'johndoe@example.com'
       };
 
       dispatch({
@@ -128,27 +140,43 @@ export const AuthProvider = (props) => {
   };
 
   const signIn = async (email, password) => {
-    if (email !== 'demo@devias.io' || password !== 'Password123!') {
+    console.log(`inside signIn`);
+    if (email !== 'johndoe@example.com' || password !== 'password123') {
       throw new Error('Please check your email and password');
     }
 
     try {
-      window.sessionStorage.setItem('authenticated', 'true');
-    } catch (err) {
-      console.error(err);
-    }
+      const requestBody = {
+        auth: {
+          username: email,
+          password: password
+        }
+      };
+      const result = await login(requestBody)
+      const {token, username} = result.message;
+      console.log('login api call result', result);
+      if(result.success){
+        localStorage.setItem(constant.USER_TOKEN, token)
+        dispatch({
+          type: HANDLERS.SET_AUTH_TOKEN,
+          payload: {token}
+        });
+      }
+      // window.sessionStorage.setItem('authenticated', 'true');
 
     const user = {
       id: '5e86809283e28b96d2d38537',
       avatar: '/assets/avatars/avatar-anika-visser.png',
       name: 'Anika Visser',
-      email: 'anika.visser@devias.io'
     };
 
     dispatch({
       type: HANDLERS.SIGN_IN,
       payload: user
     });
+  } catch (err) {
+    console.error(err);
+  }
   };
 
   const signUp = async (email, name, password) => {
@@ -156,7 +184,8 @@ export const AuthProvider = (props) => {
   };
 
   const signOut = () => {
-    window.sessionStorage.setItem('authenticated', 'false');
+    localStorage.removeItem(constant.USER_TOKEN);
+    // window.sessionStorage.setItem('authenticated', 'false');
 
     dispatch({
       type: HANDLERS.SIGN_OUT

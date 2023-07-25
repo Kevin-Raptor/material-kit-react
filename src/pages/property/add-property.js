@@ -3,7 +3,9 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  FormControl,
   Grid,
+  InputLabel,
   Paper,
   TextField,
   Typography,
@@ -25,7 +27,14 @@ const validationSchema = Yup.object().shape({
 });
 
 const AddProperty = (props) => {
+  const [addressData, setAddressData] = useState({});
   const { isOpen, onClose } = props;
+
+  const handleAddressData = (addrData) => {
+      setAddressData(addrData);
+      console.log('AddProperty.js', addrData);
+  }
+  
 
   const formik = useFormik({
     initialValues,
@@ -36,7 +45,7 @@ const AddProperty = (props) => {
     },
   });
   return (
-    <Dialog open={isOpen} onClose={onClose} maxWidth="lg">
+    <Dialog open={isOpen} onClose={onClose} maxWidth="xl">
       <DialogTitle sx={{ paddingY: 2 }}>Add Property</DialogTitle>
       <DialogContent>
         <form onSubmit={formik.handleSubmit} style={{ margin: "5px 0px" }}>
@@ -59,7 +68,7 @@ const AddProperty = (props) => {
                 />
               </Grid>
               <Grid item xs={12}>
-                <Map />
+                <Map handleAddressData={handleAddressData}/>
               </Grid>
           </Grid>
           {/* Features */}
@@ -68,29 +77,41 @@ const AddProperty = (props) => {
                 <Typography variant="h6">Features</Typography>
               </Grid>
               <Grid item xs={3}>
+              <FormControl fullWidth>
+                        <InputLabel
+                          shrink
+                          sx={{fontWeight: 'bold'}}
+                        
+                        >
+                        Total Area
+                        </InputLabel>
                 <TextField
                   fullWidth
                   variant="outlined"
                   id="totalArea"
                   name="totalArea"
                   label="Total Area"
-                  value={formik.values.totalArea}
+                  value={formik.values.totalArea || ''}
                   onChange={formik.handleChange}
                   error={formik.touched.totalArea && Boolean(formik.errors.totalArea)}
                   helperText={formik.touched.totalArea && formik.errors.totalArea}
-                />
+                  // InputLabelProps={{
+                    //   shrink: true,
+                    // }}
+                    />
+                </FormControl>
               </Grid>
               <Grid item xs={3}>
                 <TextField
                   fullWidth
                   variant="outlined"
-                  id="bedRoom"
-                  name="bedRoom"
+                  // id="bedRoom"
+                  // name="bedRoom"
                   label="Bedrooms"
                   value={formik.values.bedRoom}
-                  onChange={formik.handleChange}
-                  error={formik.touched.bedRoom && Boolean(formik.errors.bedRoom)}
-                  helperText={formik.touched.bedRoom && formik.errors.bedRoom}
+                  // onChange={formik.handleChange}
+                  // error={formik.touched.bedRoom && Boolean(formik.errors.bedRoom)}
+                  // helperText={formik.touched.bedRoom && formik.errors.bedRoom}
                 />
               </Grid>
               <Grid item xs={3}>
@@ -107,9 +128,11 @@ const AddProperty = (props) => {
                 />
               </Grid>
           </Grid>
-          <Button type="submit" variant="contained" color="primary" sx={{ marginTop: "16px" }}>
-            Submit
-          </Button>
+          <Grid container justifyContent="flex-end" sx={{ marginTop: "16px" }}>
+            <Button type="submit" variant="contained" color="primary">
+              Submit
+            </Button>
+          </Grid>
         </form>
       </DialogContent>
     </Dialog>

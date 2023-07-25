@@ -19,7 +19,6 @@ import { AllPropertyList } from "src/components/property/all-property-list";
 import { tabConfig } from "src/config/tabs-config";
 import AddProperty from "./property/add-property";
 
-
 const useStyles = (theme) => ({
   root: {
     "& .MuiOutlinedInput-root": {
@@ -73,7 +72,7 @@ const Page = () => {
     { tabName: tabConfig[0].tabName, tabValue: tabConfig[0].tabValue },
   ]);
   const [isOpen, setIsOpen] = useState(false);
- 
+
   const handleChange = (event, newValue) => {
     console.log(`tab handle change`, event, newValue);
     setValue(newValue);
@@ -92,12 +91,9 @@ const Page = () => {
           Your Properties
         </Typography>
 
-        <Stack direction="row" spacing={2}>
-          <Button variant="contained" onClick={handleOpenDialog} sx={{height: '50px', width: '150px'}}>
-            Add Property
-          </Button>
+        <Stack direction="row" spacing={2} sx={{mt: 1}}>
           <TextField
-            sx={{ mt: 2, borderRadius: 5, marginRight: 2, width: '50%' }}
+            sx={{borderRadius: 5, marginRight: 2, width: "50%" }}
             placeholder="Search properties"
             InputProps={{
               startAdornment: (
@@ -107,6 +103,13 @@ const Page = () => {
               ),
             }}
           />
+          <Button
+            variant="contained"
+            onClick={handleOpenDialog}
+            sx={{ height: "50px", width: "150px", marginTop: "10px"}}
+          >
+            Add Property
+          </Button>
         </Stack>
       </Box>
 

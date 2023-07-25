@@ -26,6 +26,7 @@ const Map = (props) => {
     geocoder
       .geocode({ location: coords })
       .then((response) => {
+        props.handleAddressData(response.results[0])
         setAddressData(response.results[0]);
         setAddressString(response.results[0].formatted_address);
       })
@@ -56,8 +57,8 @@ const Map = (props) => {
             />
           </Grid>
         </Grid>
-        {/* <Grid item container style={{ width: "100%", marginTop: 5}}> */}
-          <Grid item xs={10} sm={10} md={10} lg={10}>
+        {/* <Grid item container style={{marginTop: 7}}> */}
+          <Grid item xs={12} sm={10} md={10} lg={10}>
             <MapAutocomplete
               addressString={addressString}
               setAddressString={setAddressString}
@@ -66,8 +67,8 @@ const Map = (props) => {
               validGmapsAddress={validGmapsAddress}
               setValidGmapsAddress={setValidGmapsAddress}
             />
-          </Grid>
-        {/* </Grid> */}
+          {/* </Grid> */}
+        </Grid>
       </Grid>
     </>
   );
