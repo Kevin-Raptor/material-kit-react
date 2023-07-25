@@ -1,5 +1,6 @@
 import {
   Box,
+  Button,
   Divider,
   Grid,
   InputAdornment,
@@ -16,6 +17,8 @@ import { styled } from "@mui/material/styles";
 import SearchIcon from "@mui/icons-material/Search";
 import { AllPropertyList } from "src/components/property/all-property-list";
 import { tabConfig } from "src/config/tabs-config";
+import AddProperty from "./property/add-property";
+
 
 const useStyles = (theme) => ({
   root: {
@@ -45,11 +48,7 @@ function CustomTabPanel(props) {
       aria-labelledby={`simple-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box mt={2}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box mt={2}>{children}</Box>}
     </div>
   );
 }
@@ -70,24 +69,36 @@ function a11yProps(index) {
 const Page = () => {
   const [value, setValue] = useState(0);
   const classes = styled("div")(useStyles);
-  const [currentTab, setCurrentTab] = useState([{tabName: tabConfig[0].tabName, tabValue: tabConfig[0].tabValue}])
-
+  const [currentTab, setCurrentTab] = useState([
+    { tabName: tabConfig[0].tabName, tabValue: tabConfig[0].tabValue },
+  ]);
+  const [isOpen, setIsOpen] = useState(false);
+ 
   const handleChange = (event, newValue) => {
-    console.log(`tab handle change`, event, newValue)
+    console.log(`tab handle change`, event, newValue);
     setValue(newValue);
-    setCurrentTab(tabConfig.filter((item)=>item.tabValue === newValue));
+    setCurrentTab(tabConfig.filter((item) => item.tabValue === newValue));
+  };
+  const handleOpenDialog = () => {
+    setIsOpen(true);
+  };
+  const handleCloseDialog = () => {
+    setIsOpen(false);
   };
   return (
     <>
-      <Box sx={{display: 'flex', justifyContent: "space-between", mb: 2}}>
-      <Typography variant="h4" sx={{ px: 1, my: 1 }}>
-        Your Properties
-      </Typography>
-      <TextField
-            sx={{ mt: 2, borderRadius: 5, marginRight: 1 }}
-            size="small"
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 2 }}>
+        <Typography variant="h4" sx={{ px: 1, my: 1 }}>
+          Your Properties
+        </Typography>
+
+        <Stack direction="row" spacing={2}>
+          <Button variant="contained" onClick={handleOpenDialog} sx={{height: '50px', width: '150px'}}>
+            Add Property
+          </Button>
+          <TextField
+            sx={{ mt: 2, borderRadius: 5, marginRight: 2, width: '50%' }}
             placeholder="Search properties"
-            lable=""
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
@@ -96,39 +107,31 @@ const Page = () => {
               ),
             }}
           />
+        </Stack>
       </Box>
-      
 
-      <Grid container>
-        <Grid item xs={5}>
+      <Grid container spacing={3}>
+        <Grid item xs={6}>
+          <Tabs
+            value={value}
+            onChange={handleChange}
+            aria-label="basic tabs example"
+            sx={{ marginLeft: "20px" }}
+          >
+            {tabConfig.map((tab) => (
+              <Tab label={tab.tabName} {...a11yProps(tab.tabValue)}></Tab>
+            ))}
+          </Tabs>
+          <Divider />
+          <CustomTabPanel value={value} index={value}>
+            <AllPropertyList selectedTab={currentTab} />
+          </CustomTabPanel>
+        </Grid>
+        <Grid item xs={6}>
           <Typography>GMAPS</Typography>
         </Grid>
-
-        <Grid item xs={7}>
-          <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-            {tabConfig.map((tab)=><Tab label={tab.tabName} {...a11yProps(tab.tabValue)}></Tab>
-            )}
-          </Tabs>
-
-          <Divider />
-
-          <CustomTabPanel value={value} index={value}>
-            <AllPropertyList selectedTab={currentTab}/>
-          </CustomTabPanel>
-          {/* <CustomTabPanel value={value} index={1}>
-            <AllPropertyList tabkey="rentOverdue"/>
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={2}>
-            <AllPropertyList tabkey="rentDueSoon"/>
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={3}>
-            <AllPropertyList tabkey="rentDueLater"/>
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={4}>
-            Vacant
-          </CustomTabPanel> */}
-        </Grid>
       </Grid>
+      <AddProperty isOpen={isOpen} onClose={handleCloseDialog} />
     </>
   );
 };
