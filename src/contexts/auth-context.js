@@ -85,6 +85,7 @@ export const AuthProvider = (props) => {
     initialized.current = true;
 
     let isAuthenticated = false;
+    let token = '';
 
     try {
       isAuthenticated = window.sessionStorage.getItem('authenticated') === 'true';
@@ -162,7 +163,7 @@ export const AuthProvider = (props) => {
           payload: {token}
         });
       }
-      // window.sessionStorage.setItem('authenticated', 'true');
+      window.sessionStorage.setItem('authenticated', 'true');
 
     const user = {
       id: '5e86809283e28b96d2d38537',
@@ -185,7 +186,7 @@ export const AuthProvider = (props) => {
 
   const signOut = () => {
     localStorage.removeItem(constant.USER_TOKEN);
-    // window.sessionStorage.setItem('authenticated', 'false');
+    window.sessionStorage.setItem('authenticated', 'false');
 
     dispatch({
       type: HANDLERS.SIGN_OUT

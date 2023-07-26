@@ -18,6 +18,7 @@ import {
 } from '@mui/material';
 import { useAuth } from 'src/hooks/use-auth';
 import { Layout as AuthLayout } from 'src/layouts/auth/layout';
+import { login } from 'src/utils/api-calls/service';
 
 const Page = () => {
   const router = useRouter();
@@ -43,6 +44,8 @@ const Page = () => {
     onSubmit: async (values, helpers) => {
       try {
         await auth.signIn(values.email, values.password);
+        // const loginData = await login({auth:{username: values.email, password: values.password}})
+
         router.push('/');
       } catch (err) {
         helpers.setStatus({ success: false });
