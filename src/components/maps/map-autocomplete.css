@@ -1,0 +1,3 @@
+.pac-container {
+    z-index: 2000; /* Set the desired zIndex value to bring it above the modal */
+  }

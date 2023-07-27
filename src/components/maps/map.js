@@ -58,7 +58,10 @@ const Map = (props) => {
           </Grid>
         </Grid>
         {/* <Grid item container style={{marginTop: 7}}> */}
-          <Grid item xs={12} sm={10} md={10} lg={10}>
+         
+      </Grid>
+      <Grid container>
+        <Grid item xs={12}>
             <MapAutocomplete
               addressString={addressString}
               setAddressString={setAddressString}
@@ -67,7 +70,6 @@ const Map = (props) => {
               validGmapsAddress={validGmapsAddress}
               setValidGmapsAddress={setValidGmapsAddress}
             />
-          {/* </Grid> */}
         </Grid>
       </Grid>
     </>

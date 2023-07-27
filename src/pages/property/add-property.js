@@ -11,6 +11,7 @@ import {
   createFilterOptions,
   Autocomplete,
   Chip,
+  Stack,
 } from "@mui/material";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
@@ -167,9 +168,10 @@ const AddProperty = (props) => {
   const [addressData, setAddressData] = useState({});
   const { userAuthToken } = useAuthContext();
   const { isOpen, onClose } = props;
-  const [value, setValue] = useState([]);
+  const [value, setValue] = useState(null);
   const [inputValue, setInputValue] = useState("");
   const [tags, setTags] = useState([]);
+  const [chipValue, setChipValue] = useState([]);
 
   const handleAddressData = (addrData) => {
     setAddressData(addrData);
@@ -178,14 +180,18 @@ const AddProperty = (props) => {
   const getTags = async () => {
     const getTagsData = await fetchTags(userAuthToken);
     setTags(getTagsData.message);
+    // console.log(tags);
   };
 
-  // Function to handle chip creation
-  const handleCreateChip = () => {
-    if (inputValue.trim() !== "" && !value.some((option) => option.name === inputValue)) {
-      setValue([...value, { name: inputValue }]);
-      setInputValue(""); // Clear the inputValue after adding the chip
+  const handleDeleteChip = (chipToDelete) => {
+    let tempTag = tags;
+    const isTagExist = tags.some((tag) => tag.tagId === chipToDelete.tagId);
+    tempTag.push(chipToDelete)
+    if (!isTagExist) {
+      setTags(tempTag);
     }
+    console.log(tags);
+    setChipValue((prevChipValue) => prevChipValue.filter((chip) => chip !== chipToDelete));
   };
 
   useEffect(() => {
@@ -213,6 +219,7 @@ const AddProperty = (props) => {
             <Grid item xs={10}>
               <TextField
                 fullWidth
+                size="small"
                 variant="outlined"
                 id="propertyName"
                 name="propertyName"
@@ -225,28 +232,48 @@ const AddProperty = (props) => {
             </Grid>
             <Grid item xs={5}>
               <Autocomplete
-                multiple
+                size="small"
                 value={value}
-                onChange={(event, newValue) => {
-                  if (typeof newValue === "string" || newValue.inputValue === inputValue) {
-                    return;
-                  }
-                  setValue(newValue);
-                }}
                 inputValue={inputValue}
                 onInputChange={(event, newInputValue) => {
                   setInputValue(newInputValue);
                 }}
+                onChange={(event, newValue) => {
+                  debugger
+                  setInputValue("")
+                  setValue("");
+                  console.log(inputValue);
+                  console.log(`newValue`, newValue);
+
+                  if (newValue && newValue.inputValue) {
+                    setChipValue((prevSelectedMovies) => [
+                      ...prevSelectedMovies,
+                      { name: newValue.inputValue },
+                    ]);
+                    let updatedTag = tags.filter((item) => item.name !== newValue.inputValue);
+                    setTags(updatedTag);
+                  } else if (newValue) {
+                    // setInputValue(""); // Clear the input value when an option is selected
+                    setChipValue((prevSelectedMovies) => [...prevSelectedMovies, newValue]);
+                    let updatedTag = tags.filter((item) => item.name !== newValue?.name);
+                    setTags(updatedTag);
+                  }
+                }}
                 filterOptions={(options, params) => {
                   const filtered = filter(options, params);
 
+                  const { inputValue } = params;
                   // Suggest the creation of a new value
                   const isExisting = options.some((option) => inputValue === option.name);
-                  if (inputValue.trim() !== "" && !isExisting) {
+                  if (inputValue !== "" && !isExisting) {
+                    console.log(`new Value`);
                     filtered.push({
-                      name: inputValue,
+                      inputValue,
+                      name: `Add "${inputValue}"`,
+                      actualName: inputValue,
                     });
                   }
+
                   return filtered;
                 }}
                 selectOnFocus
@@ -267,36 +294,27 @@ const AddProperty = (props) => {
                   return option.name;
                 }}
                 renderOption={(props, option) => <li {...props}>{option.name}</li>}
-                sx={{ width: 500 }}
+                sx={{ width: 300 }}
                 freeSolo
-                renderInput={(params) => (
-                  <TextField
-                    fullWidth
-                    {...params}
-                    label="Free solo with text demo"
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        handleCreateChip();
-                      }
-                    }}
-                    onBlur={() => {
-                      handleCreateChip();
-                    }}
-                  />
-                )}
+                renderInput={(params) => <TextField {...params} label="Add Tags" />}
               />
-              {value.map((option, index) => (
-                <Chip
-                  key={index}
-                  label={option.name}
-                  onDelete={() => {
-                    setValue(value.filter((item) => item.name !== option.name));
-                  }}
-                  style={{ marginBottom: 5 }} // Optional: Add spacing between chips
-                />
-              ))}
             </Grid>
-            <Grid item xs={10}>
+            <Grid item xs={5} container direction="row" spacing={1}>
+              {chipValue.map(
+                (item) =>
+                  item?.name && (
+                    <Grid item key={item?.name}>
+                      <Chip
+                        label={item.name}
+                        onDelete={() => handleDeleteChip(item)}
+                        size="small"
+                        style={{ margin: "2px" }}
+                      />
+                    </Grid>
+                  )
+              )}
+            </Grid>
+            <Grid item xs={10} sx={{ zIndex: 300000 }}>
               <Map handleAddressData={handleAddressData} />
             </Grid>
           </Grid>
@@ -307,11 +325,12 @@ const AddProperty = (props) => {
             </Grid>
             <Grid item xs={3}>
               <FormControl fullWidth>
-                <InputLabel shrink sx={{ fontWeight: "bold" }}>
+                {/* <InputLabel shrink sx={{ fontWeight: "bold" }}>
                   Total Area
-                </InputLabel>
+                </InputLabel> */}
                 <TextField
                   fullWidth
+                  size="small"
                   variant="outlined"
                   id="totalArea"
                   name="totalArea"
@@ -329,6 +348,7 @@ const AddProperty = (props) => {
             <Grid item xs={3}>
               <TextField
                 fullWidth
+                size="small"
                 variant="outlined"
                 // id="bedRoom"
                 // name="bedRoom"
@@ -342,6 +362,7 @@ const AddProperty = (props) => {
             <Grid item xs={3}>
               <TextField
                 fullWidth
+                size="small"
                 variant="outlined"
                 id="bathRoom"
                 name="bathRoom"
@@ -355,6 +376,7 @@ const AddProperty = (props) => {
             <Grid item xs={4}>
               <TextField
                 fullWidth
+                size="small"
                 variant="outlined"
                 id="doorNo"
                 name="doorNo"
@@ -368,6 +390,7 @@ const AddProperty = (props) => {
             <Grid item xs={4}>
               <TextField
                 fullWidth
+                size="small"
                 variant="outlined"
                 id="floorNo"
                 name="floorNo"
@@ -379,6 +402,7 @@ const AddProperty = (props) => {
             <Grid item xs={10}>
               <TextField
                 fullWidth
+                size="small"
                 variant="outlined"
                 id="address"
                 name="address"
@@ -388,6 +412,7 @@ const AddProperty = (props) => {
               />
             </Grid>
           </Grid>
+          {/* Submit Button */}
           <Grid container justifyContent="flex-end" sx={{ marginTop: "16px" }}>
             <Button type="submit" variant="contained" color="primary">
               Submit
