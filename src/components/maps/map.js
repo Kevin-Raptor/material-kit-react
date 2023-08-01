@@ -5,43 +5,42 @@ import MapAutocomplete from "./map-autocomplete";
 import { GoogleApiWrapper } from "google-maps-react";
 
 const Map = (props) => {
-  const [addressData, setAddressData] = useState({});
-  const [addressString, setAddressString] = useState("");
-  const [validGmapsAddress, setValidGmapsAddress] = useState(false);
-  const [addressLatLng, setAddressLatLng] = useState({
-    lat: 12.980498,
-    lng: 77.576634,
-  });
-
+  const {handleAddrLatLng, handleAddressData, handleAddressString, addressLatLng, handleValidGmapAddress, addressData, validGmapsAddress, addressString} = props;
   const { google } = props; // Destructure the 'google' prop from the injected props
-
   const geocoder = new google.maps.Geocoder();
-
   const updateAddressFromMap = (coords) => {
     console.log(`Map.js --> updateAddressFromMap Called`)
     console.log('coords', coords)
-    setAddressLatLng(coords);
+    handleAddrLatLng(coords);
 
     // Reverse geocode to address string
     geocoder
       .geocode({ location: coords })
       .then((response) => {
-        props.handleAddressData(response.results[0])
-        setAddressData(response.results[0]);
-        setAddressString(response.results[0].formatted_address);
+        handleAddressData(response.results[0])
+        handleAddressString(response.results[0].formatted_address)
+        // setAddressData(response.results[0]);
+        // setAddressString(response.results[0].formatted_address);
       })
       .catch((e) => console.log("Geocoder failed due to: " + e));
   };
 
   const updateAddressFromAutocomplete = (addressObject) => {
+    console.log(addressObject)
     console.log(`updateAddressFromAutocomplete`);
     if (typeof addressObject !== "string") {
-      setAddressData(addressObject);
-      setAddressString(addressObject.formatted_address);
-      setAddressLatLng({
-        lat: addressObject.geometry.location.lat(),
-        lng: addressObject.geometry.location.lng(),
-      });
+      // setAddressData(addressObject);
+      // setAddressString(addressObject.formatted_address);
+      // setAddressLatLng({
+      //   lat: addressObject.geometry.location.lat(),
+      //   lng: addressObject.geometry.location.lng(),
+      // });
+      handleAddressData(addressObject);
+      handleAddressString(addressObject.formatted_address);
+      handleAddrLatLng({
+          lat: addressObject.geometry.location.lat(),
+          lng: addressObject.geometry.location.lng(),
+        })
     }
   };
 
@@ -53,7 +52,8 @@ const Map = (props) => {
             <MapContainer
               addressLatLng={addressLatLng}
               updateAddressFromMap={updateAddressFromMap}
-              setValidGmapsAddress={setValidGmapsAddress}
+              // setValidGmapsAddress={setValidGmapsAddress}
+              setValidGmapsAddress={handleValidGmapAddress}
             />
           </Grid>
         </Grid>
@@ -64,11 +64,11 @@ const Map = (props) => {
         <Grid item xs={12}>
             <MapAutocomplete
               addressString={addressString}
-              setAddressString={setAddressString}
+              setAddressString={handleAddressString}
               addressData={addressData}
               updateAddressFromAutocomplete={updateAddressFromAutocomplete}
               validGmapsAddress={validGmapsAddress}
-              setValidGmapsAddress={setValidGmapsAddress}
+              setValidGmapsAddress={handleValidGmapAddress}
             />
         </Grid>
       </Grid>

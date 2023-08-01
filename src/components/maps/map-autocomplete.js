@@ -19,6 +19,9 @@ const MapAutoComplete = (props) => {
       }
     );
     props.google.maps.event.addListener(autocomplete, "place_changed", function () {
+      console.log('autocomplete.getPlace()', autocomplete.getPlace());
+      const newLocation = autocomplete.getPlace();
+      console.log({address: newLocation.formatted_address, lat: newLocation.geometry.location.lat(), lng: newLocation.geometry.location.lng()})
       props.updateAddressFromAutocomplete(autocomplete.getPlace());
       props.setValidGmapsAddress(true);
     });

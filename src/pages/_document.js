@@ -2,6 +2,8 @@ import { Children } from 'react';
 import Document, { Head, Html, Main, NextScript } from 'next/document';
 import createEmotionServer from '@emotion/server/create-instance';
 import { createEmotionCache } from 'src/utils/create-emotion-cache';
+// import { getInitColorSchemeScript } from '@mui/system';
+
 
 const Favicon = () => (
   <>
@@ -63,6 +65,7 @@ class CustomDocument extends Document {
           <Fonts />
         </Head>
         <body>
+        {getInitColorSchemeScript()}
         <Main />
         <NextScript />
         </body>
