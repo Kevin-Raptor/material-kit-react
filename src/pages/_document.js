@@ -65,7 +65,7 @@ class CustomDocument extends Document {
           <Fonts />
         </Head>
         <body>
-        {getInitColorSchemeScript()}
+        {/* {getInitColorSchemeScript()} */}
         <Main />
         <NextScript />
         </body>
