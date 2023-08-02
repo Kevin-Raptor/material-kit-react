@@ -7,16 +7,14 @@ import {
   Grid,
   TextField,
   Typography,
-  createFilterOptions,
-  Autocomplete,
-  Chip,
+  MenuItem,
 } from "@mui/material";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import Map from "../../components/maps/map";
 import { useAuthContext } from "src/contexts/auth-context";
-import { fetchTags } from "src/utils/api-calls/service";
+import { fetchTags, fetchTagsWithOutParent } from "src/utils/api-calls/service";
 
 const initialValues = {
   propertyName: "",
@@ -33,8 +31,6 @@ const validationSchema = Yup.object().shape({
   doorNo: Yup.string().required("door number is required"),
 });
 
-const filter = createFilterOptions();
-
 const AddProperty = (props) => {
   const [addressData, setAddressData] = useState({});
   const [addressString, setAddressString] = useState("");
@@ -46,19 +42,39 @@ const AddProperty = (props) => {
   const { userAuthToken } = useAuthContext();
   const { isOpen, onClose } = props;
   const [value, setValue] = useState(null);
-  const [inputValue, setInputValue] = useState("");
+  const [inputValue1, setInputValue1] = useState("");
   const [tags, setTags] = useState([]);
   const [chipValue, setChipValue] = useState([]);
   const [selectTag, setSelectTag] = useState(true);
+  const [addChildTag, setAddChildTag] = useState(false);
+  const [showSelectTag, setShowSelectTag] = useState(true);
+  const [tagInput, setTagInput] = useState("");
+  const [suggestionTags, setSuggestionTags] = useState([]);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const [selectSuggestionTag, setSelectSuggestionTag] = useState([]);
+  const [isDropDownOpen, setIsDropDownOpen] = useState(false);
 
   useEffect(() => {
     getTags();
   }, []);
 
+  useEffect(()=>{
+      if(inputValue1.includes('/')){
+        getTagsWithNoParent();
+      }
+  }, [inputValue1])
+
   const getTags = async () => {
     const getTagsData = await fetchTags(userAuthToken);
     setTags(getTagsData.message);
   };
+
+  const getTagsWithNoParent = async() => {
+    const getChildTags = await fetchTagsWithOutParent(userAuthToken)
+    setTags([])
+    setTags(getChildTags.message.results);
+    setSuggestionTags(getChildTags.message.results)
+  }
 
   const handleAddressData = (addrData) => {
     setAddressData(addrData);
@@ -73,17 +89,17 @@ const AddProperty = (props) => {
   const handleAddrLatLng = (addrLatLngData) => {
     setAddressLatLng(addrLatLngData);
   };
-  const handleDeleteChip = (chipToDelete) => {
-    let tempTag = tags;
-    const isTagExist = tags.some((tag) => tag.tagId === chipToDelete.tagId);
-    tempTag.push(chipToDelete);
-    if (!isTagExist) {
-      setTags(tempTag);
-    }
-    setChipValue((prevChipValue) => prevChipValue.filter((chip) => chip !== chipToDelete));
-  };
+  // const handleDeleteChip = (chipToDelete) => {
+  //   let tempTag = tags;
+  //   const isTagExist = tags.some((tag) => tag.tagId === chipToDelete.tagId);
+  //   tempTag.push(chipToDelete);
+  //   if (!isTagExist) {
+  //     setTags(tempTag);
+  //   }
+  //   setChipValue((prevChipValue) => prevChipValue.filter((chip) => chip !== chipToDelete));
+  // };
   const handleAddProperty = (event) => {
-    console.log({getTags})
+    console.log({ getTags });
     event.preventDefault();
     let propertyDetailsArray = [];
     let propertyDetailsObj = {
@@ -103,35 +119,43 @@ const AddProperty = (props) => {
     console.log({ properties: propertyDetailsArray });
   };
 
-  const handleSelectTag = (event, newValue) => {
-    console.log(`handleSelectTag called`);
-    setSelectTag(true);
-    setInputValue("");
-    setValue("");
-    console.log({ newValue });
-    if (newValue && newValue.inputValue) {
-      /**
-       *  existing case
-       *  create a map of existing tagnames with tagId
-       *  if name is exist then get tagid for that name
-       *
-       *  new tag
-       *  if name does not exist in map then make an api call
-       *  with new tag name from the response append the object into tags
-       *  and then update the map
-       */
-      setChipValue((prevSelectedTags) => [...prevSelectedTags, { name: newValue.inputValue }]);
-      let updatedTag = tags.filter((item) => item.name !== newValue.inputValue);
-      setTags(updatedTag);
-    } else if (newValue) {
-      // setInputValue(""); // Clear the input value when an option is selected
-      setChipValue((prevSelectedTags) => [...prevSelectedTags, newValue]);
-      let updatedTag = tags.filter((item) => item.name !== newValue?.name);
-      setTags(updatedTag);
+  const handleSuggestionClick = async(suggestion) => {
+    setIsDropDownOpen(false);
+    setTagInput(suggestion.name+'/');
+    // const noParentTags = await getTagsWithNoParent();
+    // console.log(suggestionTags)
+  };
+
+  const handleTagInput = (event) => {
+    let { value } = event.target;
+    if(value.includes('/')){
+      setTagInput(value);
+      setIsDropDownOpen(value.length > 0);
+      console.log(`value inside if `, value)
+      console.log('inside if condition')
+      const suggestedData = tags.filter((tag) =>
+      tag.name.toLowerCase().includes(value.split('/')[1].toLowerCase())
+    );
+    console.log(`suggestedData - 1`, suggestedData)
+    setSuggestionTags([]);
+    setSuggestionTags(suggestedData);
+    console.log({suggestionTags})
+    }
+    else{
+      setTagInput(value);
+      setIsDropDownOpen(value.length > 0);
+      const suggestedData = tags.filter((item) =>
+        item.name.toLowerCase().includes(value.toLowerCase())
+      );
+      console.log(`suggestedData - 2`, suggestedData)
+      setSuggestionTags(suggestedData);
     }
   };
-  const handleChooseTag = () => {
-    setSelectTag(false);
+
+  const handleKeyDown = (event) => {
+    if (event.key === " ") {
+      setTagInput((prevValue) => prevValue.trim() + " /");
+    }
   };
 
   const formik = useFormik({
@@ -142,6 +166,9 @@ const AddProperty = (props) => {
       onClose(); // Close the dialog after form submission
     },
   });
+
+  console.log({tagInput});
+
   return (
     <Dialog open={isOpen} onClose={onClose} maxWidth="md">
       <DialogTitle sx={{ paddingY: 2 }}>Add Property</DialogTitle>
@@ -152,7 +179,8 @@ const AddProperty = (props) => {
             <Grid item xs={3}>
               <Typography variant="h6">General Information</Typography>
             </Grid>
-            <Grid item xs={10}>
+            {/* Property Name */}
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 size="small"
@@ -166,81 +194,37 @@ const AddProperty = (props) => {
                 helperText={formik.touched.propertyName && formik.errors.propertyName}
               />
             </Grid>
-            <Grid item xs={12} container direction="row">
-              {chipValue.map(
-                (item) =>
-                  item?.name && (
-                    <Grid item key={item?.name}>
-                      <Chip
-                        label={item.name}
-                        onDelete={() => handleDeleteChip(item)}
-                        size="small"
-                        style={{ margin: "2px" }}
-                      />
-                    </Grid>
-                  )
-              )}
-              {selectTag ? (
-                <Button
-                  sx={{ ml: "4px" }}
-                  size="small"
-                  variant="outlined"
-                  onClick={handleChooseTag}
-                >
-                  + New Tag
-                </Button>
-              ) : (
-                <Autocomplete
-                  size="small"
-                  value={value}
-                  inputValue={inputValue}
-                  onInputChange={(event, newInputValue) => {
-                    setInputValue(newInputValue);
-                  }}
-                  onChange={handleSelectTag}
-                  filterOptions={(options, params) => {
-                    const filtered = filter(options, params);
 
-                    const { inputValue } = params;
-                    // Suggest the creation of a new value
-                    const isExisting = options.some((option) => inputValue === option.name);
-                    if (inputValue !== "" && !isExisting) {
-                      console.log(`new Value`);
-                      filtered.push({
-                        inputValue,
-                        name: `Add "${inputValue}"`,
-                        actualName: inputValue,
-                      });
-                    }
-                    return filtered;
-                  }}
-                  selectOnFocus
-                  clearOnBlur
-                  handleHomeEndKeys
-                  id="free-solo-with-text-demo"
-                  options={tags}
-                  getOptionLabel={(option) => {
-                    // Value selected with enter, right from the input
-                    if (typeof option === "string") {
-                      return option;
-                    }
-                    // Add "xxx" option created dynamically
-                    if (option.inputValue) {
-                      return option.inputValue;
-                    }
-                    // Regular option
-                    return option.name;
-                  }}
-                  renderOption={(props, option) => <li {...props}>{option.name}</li>}
-                  sx={{ width: 150, ml: '4px' }}
-                  freeSolo
-                  renderInput={(params) => <TextField {...params} label="Add Tags" />}
-                />
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Add Tags"
+                variant="outlined"
+                value={tagInput}
+                onChange={handleTagInput}
+                onKeyDown={handleKeyDown}
+              />
+              {isDropDownOpen && (
+                <>
+                  <Grid item xs={12}>
+                    {suggestionTags.map((tag) => (
+                      <MenuItem key={tag.tagId} onClick={() => handleSuggestionClick(tag)}>
+                        {tag.name}
+                      </MenuItem>
+                    ))}
+                    {!suggestionTags.length && (
+                      <MenuItem key={1} onClick={() => handleSuggestionClick({name: tagInput})}>
+                        {`Add '${tagInput}'`}
+                      </MenuItem>
+                    )}
+                  </Grid>
+                </>
               )}
             </Grid>
 
             {/* GMaps */}
-            <Grid item xs={10} sx={{ zIndex: 300000 }}>
+            <Grid item xs={12} sx={{ zIndex: 300000 }}>
               <Map
                 addressData={addressData}
                 addressString={addressString}
@@ -254,15 +238,12 @@ const AddProperty = (props) => {
             </Grid>
           </Grid>
           {/* Features */}
-          <Grid container spacing={2} columnSpacing={{ xs: 3, sm: 2, md: 3 }}>
+          <Grid container spacing={2} columnSpacing={{ xs: 4, sm: 2, md: 3 }}>
             <Grid item xs={12} mt={3}>
               <Typography variant="h6">Features</Typography>
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={4}>
               <FormControl fullWidth>
-                {/* <InputLabel shrink sx={{ fontWeight: "bold" }}>
-                  Total Area
-                </InputLabel> */}
                 <TextField
                   fullWidth
                   size="small"
@@ -274,13 +255,10 @@ const AddProperty = (props) => {
                   onChange={formik.handleChange}
                   error={formik.touched.totalArea && Boolean(formik.errors.totalArea)}
                   helperText={formik.touched.totalArea && formik.errors.totalArea}
-                  // InputLabelProps={{
-                  //   shrink: true,
-                  // }}
                 />
               </FormControl>
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={4}>
               <TextField
                 fullWidth
                 size="small"
@@ -294,7 +272,7 @@ const AddProperty = (props) => {
                 helperText={formik.touched.bedRoom && formik.errors.bedRoom}
               />
             </Grid>
-            <Grid item xs={3}>
+            <Grid item xs={4}>
               <TextField
                 fullWidth
                 size="small"
@@ -334,7 +312,7 @@ const AddProperty = (props) => {
                 onChange={formik.handleChange}
               />
             </Grid>
-            <Grid item xs={10}>
+            <Grid item xs={12}>
               <TextField
                 fullWidth
                 size="small"

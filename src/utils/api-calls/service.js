@@ -40,3 +40,20 @@ export const fetchTags = async(token) => {
     }
 }
 
+
+export const fetchTagsWithOutParent = async(token) => {
+    try{
+        const requestOptions = {
+            headers: getAuthorizationHeader(token)
+        }
+        const result = await axios.get(`http://localhost:3400/api/tags/no-parent`, requestOptions)
+        if(result.data.success){
+            return result.data
+        }
+        else{
+            return null;
+        }
+    }catch(err){
+        console.log(`fetch tags with no parent api error`, err)
+    }
+}
