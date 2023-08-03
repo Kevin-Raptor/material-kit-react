@@ -8,13 +8,16 @@ import {
   TextField,
   Typography,
   MenuItem,
+  Breadcrumbs,
+  Chip,
 } from "@mui/material";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import Map from "../../components/maps/map";
 import { useAuthContext } from "src/contexts/auth-context";
-import { fetchTags, fetchTagsWithOutParent } from "src/utils/api-calls/service";
+import { addNewTag, fetchTags, fetchTagsWithOutParent } from "src/utils/api-calls/service";
+import capitalizeFirstLetter from "src/utils/capitalize-first-letter";
 
 const initialValues = {
   propertyName: "",
@@ -41,40 +44,34 @@ const AddProperty = (props) => {
   });
   const { userAuthToken } = useAuthContext();
   const { isOpen, onClose } = props;
-  const [value, setValue] = useState(null);
-  const [inputValue1, setInputValue1] = useState("");
   const [tags, setTags] = useState([]);
-  const [chipValue, setChipValue] = useState([]);
-  const [selectTag, setSelectTag] = useState(true);
-  const [addChildTag, setAddChildTag] = useState(false);
-  const [showSelectTag, setShowSelectTag] = useState(true);
-  const [tagInput, setTagInput] = useState("");
+  const [tagInput, setTagInput] = useState(null);
+  const [suggestionInput, setSuggestionInput] = useState("");
   const [suggestionTags, setSuggestionTags] = useState([]);
-  const [anchorEl, setAnchorEl] = useState(null);
   const [selectSuggestionTag, setSelectSuggestionTag] = useState([]);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
-
+  const [showChip, setShowChip] = useState(false);
   useEffect(() => {
     getTags();
   }, []);
 
-  useEffect(()=>{
-      if(inputValue1.includes('/')){
-        getTagsWithNoParent();
-      }
-  }, [inputValue1])
+  // useEffect(() => {
+  //   if (inputValue1.includes("/")) {
+  //     getTagsWithNoParent();
+  //   }
+  // }, [inputValue1]);
 
   const getTags = async () => {
     const getTagsData = await fetchTags(userAuthToken);
     setTags(getTagsData.message);
   };
 
-  const getTagsWithNoParent = async() => {
-    const getChildTags = await fetchTagsWithOutParent(userAuthToken)
-    setTags([])
+  const getTagsWithNoParent = async () => {
+    const getChildTags = await fetchTagsWithOutParent(userAuthToken);
+    setTags([]);
     setTags(getChildTags.message.results);
-    setSuggestionTags(getChildTags.message.results)
-  }
+    setSuggestionTags(getChildTags.message.results);
+  };
 
   const handleAddressData = (addrData) => {
     setAddressData(addrData);
@@ -89,15 +86,7 @@ const AddProperty = (props) => {
   const handleAddrLatLng = (addrLatLngData) => {
     setAddressLatLng(addrLatLngData);
   };
-  // const handleDeleteChip = (chipToDelete) => {
-  //   let tempTag = tags;
-  //   const isTagExist = tags.some((tag) => tag.tagId === chipToDelete.tagId);
-  //   tempTag.push(chipToDelete);
-  //   if (!isTagExist) {
-  //     setTags(tempTag);
-  //   }
-  //   setChipValue((prevChipValue) => prevChipValue.filter((chip) => chip !== chipToDelete));
-  // };
+
   const handleAddProperty = (event) => {
     console.log({ getTags });
     event.preventDefault();
@@ -119,35 +108,54 @@ const AddProperty = (props) => {
     console.log({ properties: propertyDetailsArray });
   };
 
-  const handleSuggestionClick = async(suggestion) => {
+  let tempArray = [];
+  const handleSuggestionClick = async (suggestion) => {
+    /**
+     *  if tag is not avaialble in drop down then add tag by making an api call
+     */
+
+    if (!suggestion?.tagId) {
+      let tempArray = [];
+      let newTagObj = {
+        name: suggestion.name,
+        fullName: capitalizeFirstLetter(suggestion.name),
+      };
+      tempArray.push(newTagObj);
+      const newTagResult = await addNewTag(userAuthToken, { tags: tempArray });
+      console.log({ newTagResult });
+    }
+    setSelectSuggestionTag((prevState) => [...prevState, suggestion]);
     setIsDropDownOpen(false);
-    setTagInput(suggestion.name+'/');
+
+    tempArray.push(suggestion.name);
+    setSuggestionInput((prev) => prev + suggestion.name + " / ");
+    setTagInput(null);
     // const noParentTags = await getTagsWithNoParent();
     // console.log(suggestionTags)
   };
 
   const handleTagInput = (event) => {
     let { value } = event.target;
-    if(value.includes('/')){
+    // if(value.trim() == ''){
+    //   getTags();
+    // }
+    if (value.includes("/")) {
       setTagInput(value);
       setIsDropDownOpen(value.length > 0);
-      console.log(`value inside if `, value)
-      console.log('inside if condition')
+      let lenValue = value.split(" / ");
+      let strLen = lenValue.length - 1;
       const suggestedData = tags.filter((tag) =>
-      tag.name.toLowerCase().includes(value.split('/')[1].toLowerCase())
-    );
-    console.log(`suggestedData - 1`, suggestedData)
-    setSuggestionTags([]);
-    setSuggestionTags(suggestedData);
-    console.log({suggestionTags})
-    }
-    else{
+        tag.name.toLowerCase().includes(value.split(" / ")[strLen]?.toLowerCase())
+      );
+      setSuggestionTags([]);
+      setSuggestionTags(suggestedData);
+      console.log({ suggestionTags });
+    } else {
       setTagInput(value);
       setIsDropDownOpen(value.length > 0);
       const suggestedData = tags.filter((item) =>
         item.name.toLowerCase().includes(value.toLowerCase())
       );
-      console.log(`suggestedData - 2`, suggestedData)
       setSuggestionTags(suggestedData);
     }
   };
@@ -156,6 +164,10 @@ const AddProperty = (props) => {
     if (event.key === " ") {
       setTagInput((prevValue) => prevValue.trim() + " /");
     }
+  };
+
+  const showTagsChip = () => {
+    setShowChip(!showChip);
   };
 
   const formik = useFormik({
@@ -167,7 +179,9 @@ const AddProperty = (props) => {
     },
   });
 
-  console.log({tagInput});
+  console.log({ tagInput });
+  console.log({ selectSuggestionTag });
+  console.log({ suggestionInput });
 
   return (
     <Dialog open={isOpen} onClose={onClose} maxWidth="md">
@@ -195,13 +209,13 @@ const AddProperty = (props) => {
               />
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item xs={10}>
               <TextField
                 fullWidth
                 size="small"
                 label="Add Tags"
                 variant="outlined"
-                value={tagInput}
+                value={tagInput === null ? suggestionInput : tagInput}
                 onChange={handleTagInput}
                 onKeyDown={handleKeyDown}
               />
@@ -209,16 +223,36 @@ const AddProperty = (props) => {
                 <>
                   <Grid item xs={12}>
                     {suggestionTags.map((tag) => (
-                      <MenuItem key={tag.tagId} onClick={() => handleSuggestionClick(tag)}>
+                      <MenuItem
+                        key={tag.tagId}
+                        onClick={() => handleSuggestionClick(tag)}
+                        sx={{ backgroundColor: "whitesmoke" }}
+                      >
                         {tag.name}
                       </MenuItem>
                     ))}
                     {!suggestionTags.length && (
-                      <MenuItem key={1} onClick={() => handleSuggestionClick({name: tagInput})}>
+                      <MenuItem key={1} onClick={() => handleSuggestionClick({ name: tagInput })}>
                         {`Add '${tagInput}'`}
                       </MenuItem>
                     )}
                   </Grid>
+                </>
+              )}
+            </Grid>
+            <Grid item xs={2}>
+              <Button onClick={showTagsChip}> Add Tags</Button>
+            </Grid>
+            <Grid item xs={12}>
+              {showChip && (
+                <>
+                  {/* <Chip> */}
+                    <Breadcrumbs>
+                      {selectSuggestionTag.map((item) => (
+                        <Chip label={item.name} variant="outlined" />
+                      ))}
+                    </Breadcrumbs>
+                  {/* </Chip> */}
                 </>
               )}
             </Grid>
