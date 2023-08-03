@@ -51,6 +51,7 @@ const AddProperty = (props) => {
   const [selectSuggestionTag, setSelectSuggestionTag] = useState([]);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [showChip, setShowChip] = useState(false);
+  const [valueAfterSlash, setValueAfterSlash] = useState('');
   useEffect(() => {
     getTags();
   }, []);
@@ -68,9 +69,7 @@ const AddProperty = (props) => {
 
   const getTagsWithNoParent = async () => {
     const getChildTags = await fetchTagsWithOutParent(userAuthToken);
-    setTags([]);
     setTags(getChildTags.message.results);
-    setSuggestionTags(getChildTags.message.results);
   };
 
   const handleAddressData = (addrData) => {
@@ -113,7 +112,8 @@ const AddProperty = (props) => {
     /**
      *  if tag is not avaialble in drop down then add tag by making an api call
      */
-
+    let newTagResult;
+    debugger;
     if (!suggestion?.tagId) {
       let tempArray = [];
       let newTagObj = {
@@ -121,36 +121,39 @@ const AddProperty = (props) => {
         fullName: capitalizeFirstLetter(suggestion.name),
       };
       tempArray.push(newTagObj);
-      const newTagResult = await addNewTag(userAuthToken, { tags: tempArray });
+      newTagResult = await addNewTag(userAuthToken, { tags: tempArray });
       console.log({ newTagResult });
+      setSelectSuggestionTag((prevState) => [...prevState, newTagResult.message.results[0]]);
     }
+
     setSelectSuggestionTag((prevState) => [...prevState, suggestion]);
     setIsDropDownOpen(false);
-
-    tempArray.push(suggestion.name);
     setSuggestionInput((prev) => prev + suggestion.name + " / ");
     setTagInput(null);
-    // const noParentTags = await getTagsWithNoParent();
-    // console.log(suggestionTags)
+    await getTagsWithNoParent();
   };
 
   const handleTagInput = (event) => {
     let { value } = event.target;
-    // if(value.trim() == ''){
-    //   getTags();
-    // }
+    if(value.trim() == ''){
+      getTags();
+      setSuggestionInput("")
+      setSelectSuggestionTag([])
+    }
     if (value.includes("/")) {
       setTagInput(value);
       setIsDropDownOpen(value.length > 0);
       let lenValue = value.split(" / ");
       let strLen = lenValue.length - 1;
+      const newValueAfterSlash = lenValue[strLen];
+      setValueAfterSlash(newValueAfterSlash)
       const suggestedData = tags.filter((tag) =>
-        tag.name.toLowerCase().includes(value.split(" / ")[strLen]?.toLowerCase())
+        tag.name.toLowerCase().includes(newValueAfterSlash?.toLowerCase())
       );
-      setSuggestionTags([]);
       setSuggestionTags(suggestedData);
       console.log({ suggestionTags });
     } else {
+      setValueAfterSlash('')
       setTagInput(value);
       setIsDropDownOpen(value.length > 0);
       const suggestedData = tags.filter((item) =>
@@ -233,7 +236,7 @@ const AddProperty = (props) => {
                     ))}
                     {!suggestionTags.length && (
                       <MenuItem key={1} onClick={() => handleSuggestionClick({ name: tagInput })}>
-                        {`Add '${tagInput}'`}
+                        { valueAfterSlash === '' ? `Add ${tagInput}` : `Add ${valueAfterSlash}`}
                       </MenuItem>
                     )}
                   </Grid>
