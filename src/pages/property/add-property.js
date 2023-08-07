@@ -10,13 +10,21 @@ import {
   MenuItem,
   Breadcrumbs,
   Chip,
+  makeStyles,
+  Stack,
 } from "@mui/material";
 import { useFormik } from "formik";
 import { useEffect, useState } from "react";
 import * as Yup from "yup";
 import Map from "../../components/maps/map";
 import { useAuthContext } from "src/contexts/auth-context";
-import { addNewTag, fetchTags, fetchTagsWithOutParent } from "src/utils/api-calls/service";
+import {
+  addNewTag,
+  addRelationBetweenParentAndChild,
+  fetchTags,
+  fetchTagsWithOutParent,
+  getChildParentRelationExist,
+} from "src/utils/api-calls/service";
 import capitalizeFirstLetter from "src/utils/capitalize-first-letter";
 
 const initialValues = {
@@ -29,6 +37,7 @@ const initialValues = {
   address: "",
 };
 
+const chipColor = ["red", "green", "blue", "yellow", "orange", "violet"];
 const validationSchema = Yup.object().shape({
   propertyName: Yup.string().required("property name is required"),
   doorNo: Yup.string().required("door number is required"),
@@ -51,25 +60,23 @@ const AddProperty = (props) => {
   const [selectSuggestionTag, setSelectSuggestionTag] = useState([]);
   const [isDropDownOpen, setIsDropDownOpen] = useState(false);
   const [showChip, setShowChip] = useState(false);
-  const [valueAfterSlash, setValueAfterSlash] = useState('');
-  useEffect(() => {
-    getTags();
-  }, []);
-
-  // useEffect(() => {
-  //   if (inputValue1.includes("/")) {
-  //     getTagsWithNoParent();
-  //   }
-  // }, [inputValue1]);
+  const [valueAfterSlash, setValueAfterSlash] = useState("");
+  const [tagChip, setTagChip] = useState([]);
 
   const getTags = async () => {
     const getTagsData = await fetchTags(userAuthToken);
     setTags(getTagsData.message);
   };
 
+  useEffect(() => {
+    getTags();
+    getTagsWithNoParent()
+
+  }, []);
+
   const getTagsWithNoParent = async () => {
     const getChildTags = await fetchTagsWithOutParent(userAuthToken);
-    setTags(getChildTags.message.results);
+    localStorage.setItem('noParentTags', JSON.stringify(getChildTags.message.results));
   };
 
   const handleAddressData = (addrData) => {
@@ -86,8 +93,24 @@ const AddProperty = (props) => {
     setAddressLatLng(addrLatLngData);
   };
 
+  const getSuggestionTagWithNoParentAndChildTag = async(parentTagId) => {
+    const getChildParentTag = await getChildParentRelationExist(parentTagId, userAuthToken);
+    let getNoParentTags = localStorage.getItem('noParentTags');
+    let storedData = JSON.parse(getNoParentTags);
+    if(!storedData.length && !getChildParentTag.message.length){
+      return [];
+    }
+    if(!storedData.length){
+     const arr = [...getChildParentTag.message[0].children];
+       return arr;
+    }
+    else{
+      const arr = [...getChildParentTag.message[0].children, ...storedData];
+      return arr;
+    }
+  }
+
   const handleAddProperty = (event) => {
-    console.log({ getTags });
     event.preventDefault();
     let propertyDetailsArray = [];
     let propertyDetailsObj = {
@@ -107,38 +130,102 @@ const AddProperty = (props) => {
     console.log({ properties: propertyDetailsArray });
   };
 
-  let tempArray = [];
   const handleSuggestionClick = async (suggestion) => {
     /**
      *  if tag is not avaialble in drop down then add tag by making an api call
      */
     let newTagResult;
-    debugger;
-    if (!suggestion?.tagId) {
+    let newValueAfterSlash = "";
+
+    if (suggestion?.tagId) {
+      setSelectSuggestionTag((prevState) => [...prevState, suggestion]);
+      const suggestionData = await getSuggestionTagWithNoParentAndChildTag(suggestion?.tagId);
+      setTags(suggestionData);
+      setSuggestionInput((prev) => prev + suggestion.name + " / ");
+      setTagInput(null);
+    } else if (suggestion?._id) {
+      const suggestionData = await getSuggestionTagWithNoParentAndChildTag(suggestion?._id);
+      setTags(suggestionData);
+      setSelectSuggestionTag((prevState) => [...prevState, suggestion]);
+      setSuggestionInput((prev) => prev + suggestion.name + " / ");
+      setTagInput(null);
+      // debugger;
+      let isChildParentRelationExist = await getChildParentRelationExist(
+        selectSuggestionTag[(selectSuggestionTag.length)-1]?._id,
+        userAuthToken
+      );
+
+      /**
+       * for already child parent relationship existing
+       * and assigning new child to parent
+       */
+      if (
+        isChildParentRelationExist.message.length > 0 &&
+        isChildParentRelationExist.message[0].parent.tagId === selectSuggestionTag[0]._id &&
+        !isChildParentRelationExist.message[0].children.some((item) => item._id === suggestion._id)
+      ) {
+        await addRelationBetweenParentAndChild(
+          selectSuggestionTag[(selectSuggestionTag.length)-1]._id,
+          suggestion._id,
+          userAuthToken
+        );
+        /**
+         *  when there is no relation between child and parent hence establishing new
+         *  relation between child and parent
+         */
+      } else if (isChildParentRelationExist.message.length === 0) {
+        await addRelationBetweenParentAndChild(
+          selectSuggestionTag[(selectSuggestionTag.length)-1]._id,
+          suggestion._id,
+          userAuthToken
+        );
+      }
+    } else if (!suggestion?.tagId) {
+      let newTagObj;
       let tempArray = [];
-      let newTagObj = {
-        name: suggestion.name,
-        fullName: capitalizeFirstLetter(suggestion.name),
-      };
+      // debugger;
+      if (suggestion.name.includes("/")) {
+        let lenValue = suggestion.name.split(" / ");
+        let strLen = lenValue.length - 1;
+        newValueAfterSlash = lenValue[strLen];
+        newTagObj = {
+          name: newValueAfterSlash,
+          fullName: capitalizeFirstLetter(newValueAfterSlash),
+        };
+      } else {
+        newTagObj = {
+          name: suggestion.name,
+          fullName: capitalizeFirstLetter(suggestion.name),
+        };
+      }
+
       tempArray.push(newTagObj);
       newTagResult = await addNewTag(userAuthToken, { tags: tempArray });
       console.log({ newTagResult });
       setSelectSuggestionTag((prevState) => [...prevState, newTagResult.message.results[0]]);
+      setSuggestionInput(suggestion.name + " / ");
+      setTagInput(null);
+      debugger;
+      if (selectSuggestionTag[(selectSuggestionTag.length)-1]?._id) {
+        const assignRelation = await addRelationBetweenParentAndChild(
+          selectSuggestionTag[(selectSuggestionTag.length)-1]._id,
+          newTagResult.message.results[0]._id,
+          userAuthToken
+        );
+        console.log(assignRelation);
+      }
+      const suggestionData = await getSuggestionTagWithNoParentAndChildTag(newTagResult.message.results[0]._id);
+      setTags(suggestionData);
     }
-
-    setSelectSuggestionTag((prevState) => [...prevState, suggestion]);
     setIsDropDownOpen(false);
-    setSuggestionInput((prev) => prev + suggestion.name + " / ");
-    setTagInput(null);
-    await getTagsWithNoParent();
   };
 
   const handleTagInput = (event) => {
     let { value } = event.target;
-    if(value.trim() == ''){
+    if (value.trim() == "") {
       getTags();
-      setSuggestionInput("")
-      setSelectSuggestionTag([])
+      setSuggestionInput("");
+      setSelectSuggestionTag([]);
     }
     if (value.includes("/")) {
       setTagInput(value);
@@ -146,14 +233,17 @@ const AddProperty = (props) => {
       let lenValue = value.split(" / ");
       let strLen = lenValue.length - 1;
       const newValueAfterSlash = lenValue[strLen];
-      setValueAfterSlash(newValueAfterSlash)
+      setValueAfterSlash(newValueAfterSlash);
+      let modifiedValue = value.split('/');
+      console.log({modifiedValue});
       const suggestedData = tags.filter((tag) =>
         tag.name.toLowerCase().includes(newValueAfterSlash?.toLowerCase())
       );
       setSuggestionTags(suggestedData);
       console.log({ suggestionTags });
     } else {
-      setValueAfterSlash('')
+      setValueAfterSlash("");
+      
       setTagInput(value);
       setIsDropDownOpen(value.length > 0);
       const suggestedData = tags.filter((item) =>
@@ -169,8 +259,13 @@ const AddProperty = (props) => {
     }
   };
 
-  const showTagsChip = () => {
+  const showTagsChip = (data) => {
     setShowChip(!showChip);
+    setTagInput("");
+    setSuggestionInput("")
+    setTagChip((prev)=>[...prev, ...data]);
+    setSelectSuggestionTag([]);
+    getTags();
   };
 
   const formik = useFormik({
@@ -183,8 +278,8 @@ const AddProperty = (props) => {
   });
 
   console.log({ tagInput });
-  console.log({ selectSuggestionTag });
   console.log({ suggestionInput });
+  console.log({ selectSuggestionTag });
 
   return (
     <Dialog open={isOpen} onClose={onClose} maxWidth="md">
@@ -220,11 +315,11 @@ const AddProperty = (props) => {
                 variant="outlined"
                 value={tagInput === null ? suggestionInput : tagInput}
                 onChange={handleTagInput}
-                onKeyDown={handleKeyDown}
+                // onKeyDown={handleKeyDown}
               />
               {isDropDownOpen && (
                 <>
-                  <Grid item xs={12}>
+                  <Grid item xs={12} sx={{ zIndex: 500 }}>
                     {suggestionTags.map((tag) => (
                       <MenuItem
                         key={tag.tagId}
@@ -236,7 +331,7 @@ const AddProperty = (props) => {
                     ))}
                     {!suggestionTags.length && (
                       <MenuItem key={1} onClick={() => handleSuggestionClick({ name: tagInput })}>
-                        { valueAfterSlash === '' ? `Add ${tagInput}` : `Add ${valueAfterSlash}`}
+                        {valueAfterSlash === "" ? `Add ${tagInput}` : `Add ${valueAfterSlash}`}
                       </MenuItem>
                     )}
                   </Grid>
@@ -244,24 +339,26 @@ const AddProperty = (props) => {
               )}
             </Grid>
             <Grid item xs={2}>
-              <Button onClick={showTagsChip}> Add Tags</Button>
+              <Button onClick={()=>showTagsChip(selectSuggestionTag)}> Add Tags</Button>
             </Grid>
             <Grid item xs={12}>
               {showChip && (
                 <>
-                  {/* <Chip> */}
-                    <Breadcrumbs>
-                      {selectSuggestionTag.map((item) => (
-                        <Chip label={item.name} variant="outlined" />
-                      ))}
-                    </Breadcrumbs>
-                  {/* </Chip> */}
+                  <Breadcrumbs>
+                    {tagChip.map((item, index) => (
+                      <Chip
+                        label={item.name}
+                        size="small"
+                        variant="outlined"
+                        sx={{ color: "whitesmoke", backgroundColor: `${chipColor[index]}` }}
+                      />
+                    ))}
+                  </Breadcrumbs>
                 </>
               )}
             </Grid>
-
             {/* GMaps */}
-            <Grid item xs={12} sx={{ zIndex: 300000 }}>
+            <Grid item xs={12}>
               <Map
                 addressData={addressData}
                 addressString={addressString}
@@ -362,13 +459,17 @@ const AddProperty = (props) => {
               />
             </Grid>
           </Grid>
-          {/* Submit Button */}
-          <Grid container justifyContent="flex-end" sx={{ marginTop: "16px" }}>
-            <Button type="submit" variant="contained" color="primary" onClick={handleAddProperty}>
-              Submit
-            </Button>
-          </Grid>
         </form>
+        <Grid
+          container
+          justifyContent="flex-end"
+          mt={2}
+          sx={{ position: "sticky", bottom: 0, zIndex: 100 }}
+        >
+          <Button type="submit" variant="contained" color="primary" onClick={handleAddProperty}>
+            Submit
+          </Button>
+        </Grid>
       </DialogContent>
     </Dialog>
   );
