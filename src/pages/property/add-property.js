@@ -219,7 +219,7 @@ const AddProperty = (props) => {
     setIsDropDownOpen(false);
   };
 
-  const handleTagInput = (event) => {
+  const handleTagInput = async(event) => {
     let { value } = event.target;
     if (value.trim() == "") {
       getTags();
@@ -233,14 +233,36 @@ const AddProperty = (props) => {
       let strLen = lenValue.length - 1;
       const newValueAfterSlash = lenValue[strLen];
       setValueAfterSlash(newValueAfterSlash);
-      const suggestedData = tags.filter((tag) =>
+      console.log({newValueAfterSlash});
+      const data = selectSuggestionTag.filter((item)=>item.name === newValueAfterSlash);
+      if(data.length > 0){
+        const getChildTag = await getSuggestionTagWithNoParentAndChildTag(data[0]._id);
+        console.log({getChildTag});
+        setTags(getChildTag);
+        const suggestedData = tags.filter((tag) =>
         tag.name.toLowerCase().includes(newValueAfterSlash?.toLowerCase())
       );
       setSuggestionTags(suggestedData);
       console.log({ suggestionTags });
+      }
+      else{
+        const suggestedData = tags.filter((tag) =>
+        tag.name.toLowerCase().includes(newValueAfterSlash?.toLowerCase())
+      );
+      setSuggestionTags(suggestedData);
+      console.log({ suggestionTags });
+      }
+
     } else {
-      setValueAfterSlash("");
-      
+      const data = selectSuggestionTag.filter((item)=>item.name === value);
+      if(data.length > 0){
+        const getChildTag = await getSuggestionTagWithNoParentAndChildTag(data[0]._id);
+        setTags(getChildTag);
+        const suggestedData = tags.filter((tag) =>
+        tag.name.toLowerCase().includes(value?.toLowerCase())
+      );
+      setSuggestionTags(suggestedData);
+      }
       setTagInput(value);
       setIsDropDownOpen(value.length > 0);
       const suggestedData = tags.filter((item) =>
@@ -251,8 +273,8 @@ const AddProperty = (props) => {
   };
 
   const handleKeyDown = (event) => {
-    if (event.key === " ") {
-      setTagInput((prevValue) => prevValue.trim() + " /");
+    if (event.key === "/") {
+      setTagInput((prevValue) => prevValue.trim() + " / ");
     }
   };
 
