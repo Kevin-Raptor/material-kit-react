@@ -201,7 +201,6 @@ const AddProperty = (props) => {
 
       tempArray.push(newTagObj);
       newTagResult = await addNewTag(userAuthToken, { tags: tempArray });
-      console.log({ newTagResult });
       setSelectSuggestionTag((prevState) => [...prevState, newTagResult.message.results[0]]);
       setSuggestionInput(suggestion.name + " / ");
       setTagInput(null);
@@ -234,8 +233,6 @@ const AddProperty = (props) => {
       let strLen = lenValue.length - 1;
       const newValueAfterSlash = lenValue[strLen];
       setValueAfterSlash(newValueAfterSlash);
-      let modifiedValue = value.split('/');
-      console.log({modifiedValue});
       const suggestedData = tags.filter((tag) =>
         tag.name.toLowerCase().includes(newValueAfterSlash?.toLowerCase())
       );
@@ -464,7 +461,7 @@ const AddProperty = (props) => {
           container
           justifyContent="flex-end"
           mt={2}
-          sx={{ position: "sticky", bottom: 0, zIndex: 100 }}
+          // sx={{ position: "sticky", bottom: 0, zIndex: 100 }}
         >
           <Button type="submit" variant="contained" color="primary" onClick={handleAddProperty}>
             Submit
