@@ -74,6 +74,7 @@ const AddProperty = (props) => {
 
   }, []);
 
+
   const getTagsWithNoParent = async () => {
     const getChildTags = await fetchTagsWithOutParent(userAuthToken);
     localStorage.setItem('noParentTags', JSON.stringify(getChildTags.message.results));
@@ -225,14 +226,26 @@ const AddProperty = (props) => {
       setSuggestionInput("");
       setSelectSuggestionTag([]);
     }
-    if (value.includes("/")) {
+    if (value.includes(" / ")) {
       setTagInput(value);
       setIsDropDownOpen(value.length > 0);
       let lenValue = value.split(" / ");
+      console.log({lenValue})
       let strLen = lenValue.length - 1;
       const newValueAfterSlash = lenValue[strLen];
       setValueAfterSlash(newValueAfterSlash);
       console.log({newValueAfterSlash});
+
+      /**
+       * if tag and subtag is same or it contain somewhtiespace then do not show the suggestion tag
+       */
+      console.log(`before if condition`, !value.split('/').includes(''))
+      if(selectSuggestionTag[(selectSuggestionTag.length) - 1].name === newValueAfterSlash || newValueAfterSlash.match(/\s{1,}/) || value.split('/').includes('')){
+       setIsDropDownOpen(false)
+      }
+      else{
+        setIsDropDownOpen(true)
+      }
       const data = selectSuggestionTag.filter((item)=>item.name === newValueAfterSlash);
       if(data.length > 0){
         const getChildTag = await getSuggestionTagWithNoParentAndChildTag(data[0]._id);
