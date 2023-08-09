@@ -2,7 +2,11 @@ import { createContext, useContext, useEffect, useReducer, useRef } from 'react'
 import PropTypes from 'prop-types';
 import { login } from 'src/utils/api-calls/service';
 import { constant } from 'src/config/constant-config';
-
+let token = null;
+if (typeof window !== 'undefined') {
+  // Perform localStorage action
+  token = localStorage.getItem(constant.USER_TOKEN) ? localStorage.getItem(constant.USER_TOKEN) : null;
+}
 const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
   SIGN_IN: 'SIGN_IN',
@@ -14,7 +18,7 @@ const initialState = {
   isAuthenticated: false,
   isLoading: true,
   user: null,
-  userAuthToken: null
+  userAuthToken: token
 };
 
 const handlers = {

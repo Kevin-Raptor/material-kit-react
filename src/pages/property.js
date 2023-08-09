@@ -18,6 +18,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { AllPropertyList } from "src/components/property/all-property-list";
 import { tabConfig } from "src/config/tabs-config";
 import AddProperty from "./property/add-property";
+import MapContainer from "src/components/maps/map-container";
 
 const useStyles = (theme) => ({
   root: {
@@ -91,9 +92,9 @@ const Page = () => {
           Your Properties
         </Typography>
 
-        <Stack direction="row" spacing={2} sx={{mt: 1}}>
+        <Stack direction="row" spacing={2} sx={{ mt: 1 }}>
           <TextField
-            sx={{borderRadius: 5, marginRight: 2, width: "50%" }}
+            sx={{ borderRadius: 5, marginRight: 2, width: "50%" }}
             placeholder="Search properties"
             InputProps={{
               startAdornment: (
@@ -106,14 +107,14 @@ const Page = () => {
           <Button
             variant="contained"
             onClick={handleOpenDialog}
-            sx={{ height: "50px", width: "150px", marginTop: "10px"}}
+            sx={{ height: "50px", width: "150px", marginTop: "10px" }}
           >
             Add Property
           </Button>
         </Stack>
       </Box>
 
-      <Grid container spacing={3}>
+      <Grid container spacing={7.5}>
         <Grid item xs={6}>
           <Tabs
             value={value}
@@ -130,8 +131,18 @@ const Page = () => {
             <AllPropertyList selectedTab={currentTab} />
           </CustomTabPanel>
         </Grid>
-        <Grid item xs={6}>
-          <Typography>GMAPS</Typography>
+        <Grid
+          item
+          xs={6}
+          mt={2}
+          sx={{
+            width: "100%", // Set your desired width for the container
+            height: "100%", // Set your desired height for the container
+            position: "relative",
+            overflow: "hidden",
+          }}
+        >
+          <MapContainer width='90%' height='85%'/>
         </Grid>
       </Grid>
       <AddProperty isOpen={isOpen} onClose={handleCloseDialog} />

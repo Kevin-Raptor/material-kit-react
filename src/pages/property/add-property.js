@@ -204,7 +204,6 @@ const AddProperty = (props) => {
       setSelectSuggestionTag((prevState) => [...prevState, newTagResult.message.results[0]]);
       setSuggestionInput(suggestion.name + " / ");
       setTagInput(null);
-      debugger;
       if (selectSuggestionTag[(selectSuggestionTag.length)-1]?._id) {
         const assignRelation = await addRelationBetweenParentAndChild(
           selectSuggestionTag[(selectSuggestionTag.length)-1]._id,

@@ -29,12 +29,6 @@ const Map = (props) => {
     console.log(addressObject)
     console.log(`updateAddressFromAutocomplete`);
     if (typeof addressObject !== "string") {
-      // setAddressData(addressObject);
-      // setAddressString(addressObject.formatted_address);
-      // setAddressLatLng({
-      //   lat: addressObject.geometry.location.lat(),
-      //   lng: addressObject.geometry.location.lng(),
-      // });
       handleAddressData(addressObject);
       handleAddressString(addressObject.formatted_address);
       handleAddrLatLng({
