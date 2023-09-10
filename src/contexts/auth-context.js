@@ -11,14 +11,16 @@ const HANDLERS = {
   INITIALIZE: 'INITIALIZE',
   SIGN_IN: 'SIGN_IN',
   SIGN_OUT: 'SIGN_OUT',
-  SET_AUTH_TOKEN: 'SET_AUTH_TOKEN'
+  SET_AUTH_TOKEN: 'SET_AUTH_TOKEN',
+  SWITCH_THEME: 'SWITCH_THEME'
 };
 
 const initialState = {
-  isAuthenticated: false,
+  isAuthenticated: true,
   isLoading: true,
   user: null,
-  userAuthToken: token
+  userAuthToken: token,
+  isDarkMode: false
 };
 
 const handlers = {
@@ -56,13 +58,19 @@ const handlers = {
       user: null
     };
   },
+  [HANDLERS.SWITCH_THEME]: (state) => {
+    return {
+      ...state,
+      isDarkMode: !state.isDarkMode
+    };
+  },
   [HANDLERS.SET_AUTH_TOKEN]: (state, action) => {
-      const {token} = action.payload
-      console.log('set auth token action', token)
-      return{
-        ...state,
-        userAuthToken: token
-      }
+    const { token } = action.payload
+    console.log('set auth token action', token)
+    return {
+      ...state,
+      userAuthToken: token
+    }
   }
 };
 
@@ -158,36 +166,42 @@ export const AuthProvider = (props) => {
         }
       };
       const result = await login(requestBody)
-      const {token, username} = result.message;
+      const { token, username } = result.message;
       console.log('login api call result', result);
-      if(result.success){
+      if (result.success) {
         localStorage.setItem(constant.USER_TOKEN, token)
         dispatch({
           type: HANDLERS.SET_AUTH_TOKEN,
-          payload: {token}
+          payload: { token }
         });
       }
       window.sessionStorage.setItem('authenticated', 'true');
 
-    const user = {
-      id: '5e86809283e28b96d2d38537',
-      avatar: '/assets/avatars/avatar-anika-visser.png',
-      name: 'Anika Visser',
-    };
+      const user = {
+        id: '5e86809283e28b96d2d38537',
+        avatar: '/assets/avatars/avatar-anika-visser.png',
+        name: 'Anika Visser',
+      };
 
-    dispatch({
-      type: HANDLERS.SIGN_IN,
-      payload: user
-    });
-  } catch (err) {
-    console.error(err);
-  }
+      dispatch({
+        type: HANDLERS.SIGN_IN,
+        payload: user
+      });
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const signUp = async (email, name, password) => {
     throw new Error('Sign up is not implemented');
   };
 
+  const switchTheme = () => {
+    console.log('ran')
+    dispatch({
+      type: HANDLERS.SWITCH_THEME
+    });
+  }
   const signOut = () => {
     localStorage.removeItem(constant.USER_TOKEN);
     window.sessionStorage.setItem('authenticated', 'false');
@@ -204,7 +218,8 @@ export const AuthProvider = (props) => {
         skip,
         signIn,
         signUp,
-        signOut
+        signOut,
+        switchTheme
       }}
     >
       {children}

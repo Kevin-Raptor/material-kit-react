@@ -5,14 +5,14 @@ import { createComponents } from './create-components';
 import { createShadows } from './create-shadows';
 import { createTypography } from './create-typography';
 
-export function createTheme() {
+export function createTheme(darkMode) {
   const palette = createPalette();
   const darkPalette = createDarkPalette();
   const components = createComponents({ palette });
   const shadows = createShadows();
   const typography = createTypography();
 
-  return createMuiTheme({
+  let temp = {
     breakpoints: {
       values: {
         xs: 0,
@@ -23,12 +23,13 @@ export function createTheme() {
       }
     },
     components,
-    palette,
-    // darkPalette,
+    palette:darkMode?darkPalette:palette,
     shadows,
     shape: {
       borderRadius: 8
     },
     typography
-  });
+  }
+  
+  return createMuiTheme(temp);
 }

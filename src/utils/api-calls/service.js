@@ -56,7 +56,7 @@ export const fetchTagsWithOutParent = async(token) => {
     }
 }
 
-debugger;
+// debugger;
 export const addNewTag = async(token, body) => {
     try{
         const requestOptions = getAuthorizationHeader(token);
